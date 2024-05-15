@@ -1,0 +1,3 @@
+str = normal
+jog = semi-erratic
+arc = erratic
