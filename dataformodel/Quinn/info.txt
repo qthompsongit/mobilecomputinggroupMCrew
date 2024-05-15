@@ -1,0 +1,3 @@
+arm circles = normal
+stretch = semi-erratic
+driving = erratic
