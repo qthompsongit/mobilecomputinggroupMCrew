@@ -1,7 +1,14 @@
+using System.Globalization;
 using System;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Diagnostics;
+using System.Collections;
+using System.Collections.Generic;
+using IronPython.Hosting;
+using UnityEngine;
+//using testcript.py;
 
 public class OculusSensorCapture : MonoBehaviour
 {
@@ -29,12 +36,29 @@ public class OculusSensorCapture : MonoBehaviour
     private DateTime logStartTime;
 
     public TextMesh hudStatusText, wallStatusText, timerText;
+    public TextMesh checktest;
     const string baseStatusText = "Press \"A\" to continue.\n";
+    private string getpath;
 
     // Start is called before the first frame update
     void Start()
     {
         sensorReader = new OculusSensorReader();
+        ProcessStartInfo start = new ProcessStartInfo();
+        
+
+        var engine = Python.CreateEngine();
+        var scope = engine.CreateScope();
+
+        string code = "str = 'Hello world!'";
+
+        var source = engine.CreateScriptSourceFromString(code);
+        source.Execute(scope);
+
+        //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
+        checktest.text = scope.GetVariable<string>("str");
+        //randomNumber.text = "Random Number: " + test.random_number (1, 5);
+
     }
 
     /// <summary>
@@ -60,12 +84,39 @@ public class OculusSensorCapture : MonoBehaviour
 
         logStartTime = DateTime.UtcNow;
         hudStatusText.text = baseStatusText + "STATUS: Recording";
+
+        var engine = Python.CreateEngine();
+        var scope = engine.CreateScope();
+
+        string code = $"str = 'Hello world!_{path}'";
+        getpath = path;
+
+        var source = engine.CreateScriptSourceFromString(code);
+        source.Execute(scope);
+
+        //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
+        checktest.text = scope.GetVariable<string>("str");
+
     }
 
     void StopLogging()
     {
+        var engine = Python.CreateEngine();
+        var scope = engine.CreateScope();
+
+        string code = $"str = 'Coolio!'";
+        //getpath = path;
+
+        var source = engine.CreateScriptSourceFromString(code);
+        source.Execute(scope);
+
+        //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
+        checktest.text = scope.GetVariable<string>("str");
+
+        checktest.text = $"Breathing: Normal:"+scope.GetVariable<string>("str")+"\nGood Job";
         logWriter.Close();
         hudStatusText.text = baseStatusText + "STATUS: Not recording";
+        
     }
 
     /// <summary>
@@ -87,7 +138,10 @@ public class OculusSensorCapture : MonoBehaviour
     {
         // Display the current time on the timer on the wall, then log it
         // in the CSV file
+
+        
         TimeSpan timeDifference = DateTime.UtcNow - logStartTime;
+        
         timerText.text = $"{timeDifference.TotalSeconds:F2} s";
 
         string logValue = $"{timeDifference.TotalMilliseconds},";
