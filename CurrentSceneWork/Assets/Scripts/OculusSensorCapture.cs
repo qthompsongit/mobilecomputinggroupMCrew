@@ -14,6 +14,14 @@ public class OculusSensorCapture : MonoBehaviour
         ("JOG", "Jogging"), ("ARC", "Arm circles"), ("STR", "Arms stretching"), ("DRI", "Driving"),
         ("TWS", "Twisting")};
 
+   // private string calmExercises = {"Nice, deep breathing! Make a graditude list of 3 things you're grateful for, and press A when you're done!",
+    //                                "Glad you're feeling so calm! Try thinking of a happy memory from your childhood, and press A when you're done!",
+    //                                "You're the epitome of calmness. In your head, visualize yourself talking to your favorite person. What do you talk about? Press A when you're done."};
+
+    //private string semiErraticExercises = {""};
+
+    //private string erraticExercises = {"I'm so sorry you feel this way. Let's try to calm you down. "};
+
     private int curActivityIdx = 0;
 
     private int curTrial = 0;
@@ -21,7 +29,7 @@ public class OculusSensorCapture : MonoBehaviour
     private DateTime logStartTime;
 
     public TextMesh hudStatusText, wallStatusText, timerText;
-    const string baseStatusText = "Press \"A\" to start/stop recording data.\n";
+    const string baseStatusText = "Press \"A\" to continue.\n";
 
     // Start is called before the first frame update
     void Start()
