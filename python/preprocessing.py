@@ -16,6 +16,7 @@ from collections import Counter
 from sklearn.ensemble import RandomForestClassifier
 import time
 from sklearn.metrics import confusion_matrix
+from sklearn.neural_network import MLPClassifier
 
 
 def getfiles_makedata():
@@ -56,7 +57,7 @@ def getfiles_makedata():
                 readfile['breathread'] = 'erratic'
             #print(readfile.head(5))
             #print(readfile.columns)
-            if incre % 10:
+            if incre > 3:
                 mydfdata_train = pd.concat([mydfdata_train, readfile])
             else :
                 mydfdata_test = pd.concat([mydfdata_test, readfile])
@@ -64,7 +65,8 @@ def getfiles_makedata():
         
         incre = 0
         os.chdir("..")
-        
+    #print(mydfdata_train.isnull())
+    
     for name in dr_sit_tws:
         os.chdir(name)
         file_list = [i for i in os.listdir() if i.find("info") < 0]
@@ -79,7 +81,7 @@ def getfiles_makedata():
                 readfile['breathread'] = 'erratic'
             #print(readfile.head(5))
             #print(readfile.columns)
-            if incre % 10:
+            if incre > 3:
                 mydfdata_train = pd.concat([mydfdata_train, readfile])
             else :
                 mydfdata_test = pd.concat([mydfdata_test, readfile])
@@ -87,7 +89,7 @@ def getfiles_makedata():
         
         incre = 0
         os.chdir("..")
-        
+    #print(mydfdata_test.isnull())
     for name in str_jog_arc:
         os.chdir(name)
         file_list = [i for i in os.listdir() if i.find("info") < 0]
@@ -102,7 +104,7 @@ def getfiles_makedata():
                 readfile['breathread'] = 'erratic'
             #print(readfile.head(5))
             #print(readfile.columns)
-            if incre % 10:
+            if incre > 3:
                 mydfdata_train = pd.concat([mydfdata_train, readfile])
             else :
                 mydfdata_test = pd.concat([mydfdata_test, readfile])
@@ -119,14 +121,19 @@ def getfiles_makedata():
     return mydfdata_train, mydfdata_test
         
 def train_model(train_data):
+    myclasscheck = MLPClassifier(hidden_layer_sizes=100, learning_rate="adaptive", max_iter=1000)
     myrandforcheck = RandomForestClassifier(n_estimators=100, max_depth = 10)
+    train_data = train_data.dropna()
     myfeats = train_data[train_data.columns[:-1]]
     mypred = train_data[train_data.columns[-1]]
     
+    myclasscheck.fit(myfeats, mypred)
     myrandforcheck.fit(myfeats, mypred)
     predcheck = myrandforcheck.predict(myfeats)
-    print(classification_report(mypred, predcheck))
-    return myrandforcheck
+    predcheck2 = myclasscheck.predict(myfeats)
+    print("RANDOM FOREST:", classification_report(mypred, predcheck))
+    print("MLP:", classification_report(mypred, predcheck2))
+    return myrandforcheck, myclasscheck
     
 def evaluate_model(model, tester_data):
     myfeats = tester_data[tester_data.columns[:-1]]
@@ -136,5 +143,16 @@ def evaluate_model(model, tester_data):
     
     
 train_data, test_data = getfiles_makedata()
-testmodel = train_model(train_data)
-evaluate_model(testmodel, test_data)
+testmodelrandfor, testmodelmlp = train_model(train_data)
+print("RANDOM FOREST TEST")
+evaluate_model(testmodelrandfor, test_data)
+print("MLP TEST")
+evaluate_model(testmodelmlp, test_data)
+
+fp = open("../mymodelfile_randfor","wb") 
+pickle.dump(testmodelrandfor, fp) 
+fp.close()
+
+fp = open("../mymodelfile_mlp","wb") 
+pickle.dump(testmodelmlp, fp) 
+fp.close()
