@@ -27,7 +27,7 @@ public class OculusSensorCapture : MonoBehaviour
                                     "You're the epitome of calmness. In your head, visualize yourself talking to your favorite person. What do you talk about? Press A when you're done."};
 
 
-    private string[] erraticExercises = {"I am so sorry you feel this way. Let's try to calm you down.",
+    private string[] erraticExercises = {"I am so sorry you feel this way. Name 5 things you can see, 4 things you touch, 3 things you can hear, 2 tthings you can smell, and 1 think you can taste.",
                                         "Your breathing is very erratic. Try this breathing exercise. Inhale for 4 seconds, hold your breathe for 7, and exhale for 8. Repeat twice more, and press A when you're done.",
                                         "Do you have mantra you repeat when you are this stressed? Repeat it to yourself 5 times, and press A when you're done."};
 
@@ -250,7 +250,7 @@ public class OculusSensorCapture : MonoBehaviour
             {
                 Random rnd = new Random();
                 int moodIdx = rnd.Next(1);
-                int exerciseIdx = rnd.Next(1);
+                int exerciseIdx = rnd.Next(2);
                 string currMood = mood[moodIdx];
 
                 if(currMood == "Calm")
