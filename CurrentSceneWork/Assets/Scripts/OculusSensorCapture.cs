@@ -26,15 +26,12 @@ public class OculusSensorCapture : MonoBehaviour
                                     "Glad you're feeling so calm! Try thinking of a happy memory from your childhood, and press A when you're done!",
                                     "You're the epitome of calmness. In your head, visualize yourself talking to your favorite person. What do you talk about? Press A when you're done."};
 
-    private string[] semiErraticExercises = {"Your breathing is heightened! Try thinking of your happy place for about 30 seconds! Press A when you're done.",
-                                            "You need some help to be grounded. Find an object in the room, and try to describe it. Press A when you're done.",
-                                            "You have slightly erratic breathing. Before we measure you again, try again to take 5 deep breaths, as best you can. Press A when you're done!"};
 
     private string[] erraticExercises = {"I am so sorry you feel this way. Let's try to calm you down.",
                                         "Your breathing is very erratic. Try this breathing exercise. Inhale for 4 seconds, hold your breathe for 7, and exhale for 8. Repeat twice more, and press A when you're done.",
                                         "Do you have mantra you repeat when you are this stressed? Repeat it to yourself 5 times, and press A when you're done."};
 
-    private string[] mood = {"Calm", "SemiErratic", "Erratic"};
+    private string[] mood = {"Calm", "Erratic"};
 
     private string[] script = {"This is a VR meditative experience.", "We will measure your breathing, and give you appropriate exercises depending on how calm you are.", "Let's start by testing your breathing right now."};
 
@@ -42,7 +39,7 @@ public class OculusSensorCapture : MonoBehaviour
 
     private int scriptIdx = 0;
 
-    private int sceneIdx = 3;
+    private int sceneIdx = 0;
 
     private int curTrial = 0;
 
@@ -208,9 +205,15 @@ public class OculusSensorCapture : MonoBehaviour
         // and refresh the number of collected data files on the UI
         if (frontTriggerPressed)
         {
-            curActivityIdx = (curActivityIdx + 1) % activities.Length;
-            curTrial = GetNumExistingDataFiles();
-            SendImpulse(0.1f, 0.05f);
+            isLogging = !isLogging;
+            if(isLogging)
+            {
+                StartLogging();
+            }
+            else
+            {
+                StopLogging();
+            }
         }
 
         // Toggle logging on/off
@@ -227,7 +230,7 @@ public class OculusSensorCapture : MonoBehaviour
             //}
 
             sceneIdx += 1;
-            isLogging = !isLogging;
+
 
             // checking if scene is at a point where we are introducing the user to Sensoroom
             if(scriptIdx < 2)
@@ -239,32 +242,20 @@ public class OculusSensorCapture : MonoBehaviour
             // checking if scene is at a point where we are recording the user's breathing
             else if((sceneIdx % 2) != 0)
             {
-                wallStatusText.text = $"Recording your deep breathing.";
-                if(isLogging)
-                {
-                    StartLogging();
-                }
-                else
-                {
-                    StopLogging();
-                }
+                wallStatusText.text = $"Ready to record your breathing. Press the front trigger to start/stop 10 seconds of recording.";
             }
 
             // checking if scene is at a point where we are giving the user an exercise to complete
             else if((sceneIdx % 2) == 0)
             {
                 Random rnd = new Random();
-                int moodIdx = rnd.Next(2);
-                int exerciseIdx = rnd.Next(2);
+                int moodIdx = rnd.Next(1);
+                int exerciseIdx = rnd.Next(1);
                 string currMood = mood[moodIdx];
 
                 if(currMood == "Calm")
                 {
                     wallStatusText.text = $"{calmExercises[exerciseIdx]}";
-                }
-                else if(currMood == "SemiErratic")
-                {
-                    wallStatusText.text = $"{semiErraticExercises[exerciseIdx]}";
                 }
                 else
                 {
