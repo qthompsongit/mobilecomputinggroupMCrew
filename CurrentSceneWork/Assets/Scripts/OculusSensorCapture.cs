@@ -250,7 +250,7 @@ public class OculusSensorCapture : MonoBehaviour
             {
                 Random rnd = new Random();
                 int moodIdx = rnd.Next(1);
-                int exerciseIdx = rnd.Next(2);
+                int exerciseIdx = (rnd.Next(1,3) - 1);
                 string currMood = mood[moodIdx];
 
                 if(currMood == "Calm")
