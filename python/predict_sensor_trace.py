@@ -19,7 +19,9 @@ import time
 from sklearn.metrics import confusion_matrix
 from sklearn.neural_network import MLPClassifier
 import energyusage
+from pyJoules.energy_meter import measure_energy
 
+@measure_energy
 def makepred(n = 10):
     fp = open("mymodelfile_randfor_2","rb") 
     myrandfor = pickle.load(fp) 
@@ -38,12 +40,4 @@ def makepred(n = 10):
     with open("myprediction.txt", "w") as myfile:
         myfile.write(predict_val[arrcheck.index(max(arrcheck))])
         
-#energyusage.evaluate(makepred, 10, pdf=False, printToScreen=True)
-
-
-# user function to be evaluated
-def recursive_fib(n):
-    if (n <= 2): return 1
-    else: return recursive_fib(n-1) + recursive_fib(n-2)
-
-energyusage.evaluate(recursive_fib, 40, pdf=True)
+makepred()
