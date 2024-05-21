@@ -45,15 +45,14 @@ public class OculusSensorCapture : MonoBehaviour
 
     private int curActivityIdx = 0;
 
-
-   
-
     private DateTime logStartTime;
 
     public TextMesh hudStatusText, wallStatusText, timerText;
     public TextMesh checktest;
     const string baseStatusText = "Press \"A\" to continue.\n";
     private string getpath;
+
+    private string getpredcheck;
 
     // Start is called before the first frame update
     void Start()
@@ -65,13 +64,29 @@ public class OculusSensorCapture : MonoBehaviour
         var engine = Python.CreateEngine();
         var scope = engine.CreateScope();
 
+        
+        TextAsset textAsset = Resources.Load<TextAsset>("myprediction");
+        string fileContent = "sdada";
+        if (textAsset != null)
+        {
+            // Get the text content of the file
+            fileContent = textAsset.text;
+        }
+        else
+        {
+            fileContent = "ERROR";
+        }
+
+        getpredcheck = fileContent;
+        //string mytextcheck = textFile.text;
+
         string code = "str = 'Hello world!'";
 
         var source = engine.CreateScriptSourceFromString(code);
         source.Execute(scope);
 
         //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
-        checktest.text = scope.GetVariable<string>("str");
+        checktest.text = "Welcome!";
         //randomNumber.text = "Random Number: " + test.random_number (1, 5);
 
     }
@@ -110,7 +125,7 @@ public class OculusSensorCapture : MonoBehaviour
         source.Execute(scope);
 
         //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
-        checktest.text = scope.GetVariable<string>("str");
+        checktest.text = "Recording";
 
     }
 
@@ -128,7 +143,55 @@ public class OculusSensorCapture : MonoBehaviour
         //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
         checktest.text = scope.GetVariable<string>("str");
 
-        checktest.text = $"Breathing: Normal:"+scope.GetVariable<string>("str")+"\nGood Job";
+        TextAsset exeAsset = Resources.Load<TextAsset>("predict_sensor_trace");
+        string myerrocheck = "313";
+        if (exeAsset != null)
+        {
+            // Create a temporary path to extract the executable
+            string tempPath = Path.Combine(Application.persistentDataPath, "predict_sensor_trace" + ".exe");
+
+            // Write the executable bytes to the temporary path
+            File.WriteAllBytes(tempPath, exeAsset.bytes);
+
+            // Start the process
+            Process process = new Process();
+            process.StartInfo.FileName = tempPath;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.Arguments = getpath;
+            process.StartInfo.CreateNoWindow = true; // Set to false if you want to see the console window
+            process.Start();
+
+            // Optionally wait for the process to exit
+            process.WaitForExit();
+
+            // Clean up: delete the temporary file
+            File.Delete(tempPath);
+
+            UnityEngine.Debug.Log("Process finished with exit code: " + process.ExitCode);
+        }
+        else
+        {
+            myerrocheck = "121";
+        }
+
+
+        TextAsset textAsset = Resources.Load<TextAsset>("myprediction");
+        string fileContent = "sdada";
+        if (textAsset != null)
+        {
+            // Get the text content of the file
+            fileContent = textAsset.text;
+        }
+        else
+        {
+            fileContent = "ERROR";
+        }
+
+        getpredcheck = fileContent;
+
+
+
+        checktest.text = $"Breathing:"+getpredcheck;
         logWriter.Close();
         hudStatusText.text = baseStatusText + "STATUS: Not recording";
         
@@ -251,9 +314,9 @@ public class OculusSensorCapture : MonoBehaviour
                 Random rnd = new Random();
                 int moodIdx = rnd.Next(1);
                 int exerciseIdx = (rnd.Next(1,3) - 1);
-                string currMood = mood[moodIdx];
+                string currMood = getpredcheck;
 
-                if(currMood == "Calm")
+                if(currMood == "normal")
                 {
                     wallStatusText.text = $"{calmExercises[exerciseIdx]}";
                 }
