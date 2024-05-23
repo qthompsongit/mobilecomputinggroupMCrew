@@ -22,16 +22,19 @@ import energyusage
 from pyJoules.energy_meter import measure_energy
 
 @measure_energy
+#the code below is a mirror of the python code that should run our model and spit out a prediction
 def makepred(n = 10):
     fp = open("mymodelfile_randfor_2","rb") 
     myrandfor = pickle.load(fp) 
     fp.close()
+    #get the file
     mydataset = pd.read_csv(sys.argv[1], index_col=False)
     print(mydataset.head(5))
+    #run predict probability and take the most common reading
     myprediction = myrandfor.predict_proba(mydataset)
     print(myrandfor.classes_)
     arrcheck = [0, 0, 0]
-    predict_val = ['erratic', 'normal', 'semi-erratic']
+    predict_val = ['erratic', 'normal']
     for stats in myprediction:
         arrcheck[list(stats).index(max(stats))] += 1
     print(myprediction)

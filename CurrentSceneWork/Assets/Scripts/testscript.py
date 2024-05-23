@@ -1,3 +1,4 @@
+#test script for debugging purposes
 class Test():
     def __init__(self, name):
         self.name = name

@@ -18,7 +18,7 @@ import time
 from sklearn.metrics import confusion_matrix
 from sklearn.neural_network import MLPClassifier
 
-
+#get the files for our model
 def getfiles_makedata():
     print(os.getcwd())
     os.chdir("dataformodel")
@@ -43,6 +43,7 @@ def getfiles_makedata():
     mydfdata_test = pd.DataFrame(columns=myfeats)
     #print(mydfdata.columns)
     incre = 0 
+    #assign breahting level classifications
     for name in ar_str_dr:
         os.chdir(name)
         file_list = [i for i in os.listdir() if i.find("info") < 0]
@@ -66,7 +67,7 @@ def getfiles_makedata():
         incre = 0
         os.chdir("..")
     #print(mydfdata_train.isnull())
-    
+    #repeat for different sets of data
     for name in dr_sit_tws:
         os.chdir(name)
         file_list = [i for i in os.listdir() if i.find("info") < 0]
@@ -90,6 +91,7 @@ def getfiles_makedata():
         incre = 0
         os.chdir("..")
     #print(mydfdata_test.isnull())
+    #repeat build sets one last time
     for name in str_jog_arc:
         os.chdir(name)
         file_list = [i for i in os.listdir() if i.find("info") < 0]
@@ -114,12 +116,13 @@ def getfiles_makedata():
         os.chdir("..")
         
         
-        
+    #save training and test sets to files
     mydfdata_test.to_csv("test_data.csv")
     mydfdata_train.to_csv("train_data.csv")
     
     return mydfdata_train, mydfdata_test
         
+#train the model with the provided data
 def train_model(train_data):
     myclasscheck = MLPClassifier(hidden_layer_sizes=100, learning_rate="adaptive", max_iter=1000)
     myrandforcheck = RandomForestClassifier(n_estimators=100, max_depth = 10)
@@ -135,6 +138,7 @@ def train_model(train_data):
     print("MLP:", classification_report(mypred, predcheck2))
     return myrandforcheck, myclasscheck
     
+#evaluate the model with classification report
 def evaluate_model(model, tester_data):
     myfeats = tester_data[tester_data.columns[:-1]]
     mypred = tester_data[tester_data.columns[-1]]
@@ -149,6 +153,7 @@ evaluate_model(testmodelrandfor, test_data)
 print("MLP TEST")
 evaluate_model(testmodelmlp, test_data)
 
+#save the created models to be used later
 fp = open("../mymodelfile_randfor","wb") 
 pickle.dump(testmodelrandfor, fp) 
 fp.close()

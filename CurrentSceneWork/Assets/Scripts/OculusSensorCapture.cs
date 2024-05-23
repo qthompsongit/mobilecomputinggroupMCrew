@@ -10,7 +10,8 @@ using IronPython.Hosting;
 using UnityEngine;
 using Random = System.Random;
 //using testcript.py;
-
+//a good chunk of this code uses the OculusSensorCapture.cs from the activity detection mobile computing lab
+//it is modified accordingly to work with our data and model
 public class OculusSensorCapture : MonoBehaviour
 {
     OculusSensorReader sensorReader;
@@ -86,7 +87,7 @@ public class OculusSensorCapture : MonoBehaviour
         source.Execute(scope);
 
         //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
-        checktest.text = "Welcome! \nWatch the TV and press the right front trigger to continue";
+        checktest.text = "Welcome! \nWatch the TV and press \nthe right front trigger to continue";
         //randomNumber.text = "Random Number: " + test.random_number (1, 5);
 
     }

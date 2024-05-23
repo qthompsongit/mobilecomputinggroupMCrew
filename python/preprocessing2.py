@@ -18,7 +18,7 @@ import time
 from sklearn.metrics import confusion_matrix
 from sklearn.neural_network import MLPClassifier
 
-
+#The code below is the same as preprocessing.py but removes refereneces to semi-erratic movement
 def getfiles_makedata():
     print(os.getcwd())
     os.chdir("dataformodel")
@@ -43,6 +43,8 @@ def getfiles_makedata():
     mydfdata_test = pd.DataFrame(columns=myfeats)
     #print(mydfdata.columns)
     incre = 0 
+    
+    #build the training and test datasets from provided files
     for name in ar_str_dr:
         os.chdir(name)
         file_list = [i for i in os.listdir() if i.find("info") < 0]
@@ -114,12 +116,13 @@ def getfiles_makedata():
         os.chdir("..")
         
         
-        
+    #save to files     
     mydfdata_test.to_csv("test_data_2.csv")
     mydfdata_train.to_csv("train_data_2.csv")
     
     return mydfdata_train, mydfdata_test
-        
+  
+#train the models on loaded data    
 def train_model(train_data):
     myclasscheck = MLPClassifier(hidden_layer_sizes=100, learning_rate="adaptive", max_iter=1000)
     myrandforcheck = RandomForestClassifier(n_estimators=100, max_depth = 10)
@@ -135,13 +138,14 @@ def train_model(train_data):
     print("MLP:", classification_report(mypred, predcheck2))
     return myrandforcheck, myclasscheck
     
+#evaluate the models on a test set
 def evaluate_model(model, tester_data):
     myfeats = tester_data[tester_data.columns[:-1]]
     mypred = tester_data[tester_data.columns[-1]]
     mypredcheck = model.predict(myfeats)
     print(classification_report(mypred, mypredcheck))
     
-    
+#save models to be used later    
 train_data, test_data = getfiles_makedata()
 testmodelrandfor, testmodelmlp = train_model(train_data)
 print("RANDOM FOREST TEST")

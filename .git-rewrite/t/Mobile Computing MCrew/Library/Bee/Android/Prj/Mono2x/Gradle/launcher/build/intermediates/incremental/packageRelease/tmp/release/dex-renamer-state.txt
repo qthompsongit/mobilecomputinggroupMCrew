@@ -1,0 +1,4 @@
+#Sun Apr 07 12:36:00 CDT 2024
+base.0=/Users/urunnaanyanwu/Documents/Spring 2024/mobile computing/lab1/mc-lab1-ukanyanwu/Library/Bee/Android/Prj/Mono2x/Gradle/launcher/build/intermediates/dex/release/mergeDexRelease/classes.dex
+path.0=classes.dex
+renamed.0=classes.dex
