@@ -86,7 +86,7 @@ public class OculusSensorCapture : MonoBehaviour
         source.Execute(scope);
 
         //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
-        checktest.text = "Welcome!";
+        checktest.text = "Welcome! \nWatch the TV and press the right front trigger to continue";
         //randomNumber.text = "Random Number: " + test.random_number (1, 5);
 
     }
