@@ -1,3 +1,0 @@
-dri = normal
-sit = semi-erratic
-tws = erratic

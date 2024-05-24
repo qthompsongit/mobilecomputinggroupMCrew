@@ -5,10 +5,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Diagnostics;
 using System.Collections;
-using System.Collections.Generic;
 using IronPython.Hosting;
-using UnityEngine;
 using Random = System.Random;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
+using System.Threading.Tasks;
+using UnityEngine.Networking;
+
+
 //using testcript.py;
 //a good chunk of this code uses the OculusSensorCapture.cs from the activity detection mobile computing lab
 //it is modified accordingly to work with our data and model
@@ -19,23 +23,31 @@ public class OculusSensorCapture : MonoBehaviour
     private StreamWriter logWriter;
     private bool isLogging = false;
 
+    private bool inTutorial = true;
+
     private (string, string)[] activities = {("STD", "Standing"), ("SIT", "Sitting"),
         ("JOG", "Jogging"), ("ARC", "Arm circles"), ("STR", "Arms stretching"), ("DRI", "Driving"),
         ("TWS", "Twisting")};
 
-    private string[] calmExercises = {"Nice, deep breathing! Make a graditude list of 3 things you're grateful for, and press A when you're done!",
-                                    "Glad you're feeling so calm! Try thinking of a happy memory from your childhood, and press A when you're done!",
-                                    "You're the epitome of calmness. In your head, visualize yourself talking to your favorite person. What do you talk about? Press A when you're done."};
+    private string[] calmExercises = {
+        "Nice, deep breathing! Make a graditude\nlist of 3 things you're grateful\nfor, and press A when you're done!",
+        "Glad you're feeling so calm! Try\nthinking of a happy memory from\nyour childhood, and press A when\nyou're done!",
+        "You're the epitome of calmness. In\nyour head, visualize yourself\ntalking to your favorite person.\nWhat do you talk about? Press A\nwhen you're done."
+    };
 
-
-    private string[] erraticExercises = {"I am so sorry you feel this way. Name 5 things you can see, 4 things you touch, 3 things you can hear, 2 tthings you can smell, and 1 think you can taste.",
-                                        "Your breathing is very erratic. Try this breathing exercise. Inhale for 4 seconds, hold your breathe for 7, and exhale for 8. Repeat twice more, and press A when you're done.",
-                                        "Do you have mantra you repeat when you are this stressed? Repeat it to yourself 5 times, and press A when you're done."};
+    private string[] erraticExercises = {
+        "I am so sorry you feel this way. Name\n5 things you can see, 4 things you\ntouch, 3 things you can hear, 2\nthings you can smell, and 1 thing\nyou can taste.",
+        "Your breathing is very erratic. Try\nthis breathing exercise. Inhale for\n4 seconds, hold your breath for 7,\nand exhale for 8. Repeat twice more,\nand press A when you're done.",
+        "Do you have a mantra you repeat when\nyou are this stressed? Repeat it to\nyourself 5 times, and press A when\nyou're done."
+    };
 
     private string[] mood = {"Calm", "Erratic"};
 
-    private string[] script = {"This is a VR meditative experience.", "We will measure your breathing, and give you appropriate exercises depending on how calm you are.", "Let's start by testing your breathing right now."};
-
+    private string[] script = {
+        "This is a VR meditative experience.",
+        "We will measure your breathing, and\ngive you appropriate exercises\ndepending on how calm you are.",
+        "Let's start by testing your breathing\nright now."
+    };
     private int curExerciseIdx = 0;
 
     private int scriptIdx = 0;
@@ -50,14 +62,21 @@ public class OculusSensorCapture : MonoBehaviour
 
     public TextMesh hudStatusText, wallStatusText, timerText;
     public TextMesh checktest;
-    const string baseStatusText = "Press \"A\" to continue.\n";
+    const string baseStatusText = "Press the front trigger\n to continue.\n";
     private string getpath;
 
     private string getpredcheck;
+    private string getpredcheck2;
+    private StorageClient storageClient;
+    [SerializeField] private string bucketName = "bucket_name";
+    [SerializeField] private string fileName = "myprediction.txt";
+
+    private string serverUrl = "http://192.168.1.83:5000/";
 
     // Start is called before the first frame update
     void Start()
     {
+
         sensorReader = new OculusSensorReader();
         ProcessStartInfo start = new ProcessStartInfo();
         
@@ -87,10 +106,11 @@ public class OculusSensorCapture : MonoBehaviour
         source.Execute(scope);
 
         //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
-        checktest.text = "Welcome! \nWatch the TV and press \nthe right front trigger to continue";
+        checktest.text = "Welcome! \nWatch the TV, take a seat\n and press \nthe A button to continue";
         //randomNumber.text = "Random Number: " + test.random_number (1, 5);
 
     }
+
 
     /// <summary>
     /// Get the filename prefix of a logged data file, based on the selected activity
@@ -103,99 +123,143 @@ public class OculusSensorCapture : MonoBehaviour
 
     void StartLogging()
     {
-        curTrial += 1;
+        if (inTutorial == true) {
 
-        sensorReader.RefreshTrackedDevices();
+        } else {
+            curTrial += 1;
 
-        string filename = $"{GetDataFilePrefix()}_{curTrial:D2}.csv";
-        string path = Path.Combine(Application.persistentDataPath, filename);
+            sensorReader.RefreshTrackedDevices();
 
-        logWriter = new StreamWriter(path);
-        logWriter.WriteLine(GetLogHeader());
+            string filename = $"{GetDataFilePrefix()}_{curTrial:D2}.csv";
+            string path = Path.Combine(Application.persistentDataPath, filename);
 
-        logStartTime = DateTime.UtcNow;
-        hudStatusText.text = baseStatusText + "STATUS: Recording";
+            logWriter = new StreamWriter(path);
+            logWriter.WriteLine(GetLogHeader());
 
-        var engine = Python.CreateEngine();
-        var scope = engine.CreateScope();
+            logStartTime = DateTime.UtcNow;
+            hudStatusText.text = baseStatusText + "STATUS: Recording";
 
-        string code = $"str = 'Hello world!_{path}'";
-        getpath = path;
+            var engine = Python.CreateEngine();
+            var scope = engine.CreateScope();
 
-        var source = engine.CreateScriptSourceFromString(code);
-        source.Execute(scope);
+            string code = $"str = 'Hello world!_{path}'";
+            getpath = path;
 
-        //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
-        checktest.text = "Recording";
+            var source = engine.CreateScriptSourceFromString(code);
+            source.Execute(scope);
+
+            //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
+            checktest.text = "Recording";
+
+        }
+        
 
     }
 
     void StopLogging()
     {
-        var engine = Python.CreateEngine();
-        var scope = engine.CreateScope();
+        if (inTutorial == true) {
 
-        string code = $"str = 'Coolio!'";
-        //getpath = path;
+        } else {
+            TextAsset textAsset = Resources.Load<TextAsset>("myprediction");
+            string fileContent = "sdada";
 
-        var source = engine.CreateScriptSourceFromString(code);
-        source.Execute(scope);
+            getpredcheck = fileContent;
 
-        //UnityEngine.Debug.Log(scope.GetVariable<string>("str"));
-        checktest.text = scope.GetVariable<string>("str");
 
-        TextAsset exeAsset = Resources.Load<TextAsset>("predict_sensor_trace");
-        string myerrocheck = "313";
-        if (exeAsset != null)
-        {
-            // Create a temporary path to extract the executable
-            string tempPath = Path.Combine(Application.persistentDataPath, "predict_sensor_trace" + ".exe");
 
-            // Write the executable bytes to the temporary path
-            File.WriteAllBytes(tempPath, exeAsset.bytes);
+            
+            logWriter.Close();
+            string filename = $"{GetDataFilePrefix()}_{curTrial:D2}.csv";
+            string path = Path.Combine(Application.persistentDataPath, filename);
+            try
+            {
+                StartCoroutine(SendDataToServer(path));
+                //ccktest.text = $"Breathing:" + getpredcheck2;
+                
+            } catch (Exception e)
+            {
+                hudStatusText.text = baseStatusText + "STATUS: Not recording" + e.Message;
+            }
+            //ecktest.text = $"Breathing:" + getpredcheck2
 
-            // Start the process
-            Process process = new Process();
-            process.StartInfo.FileName = tempPath;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.Arguments = getpath;
-            process.StartInfo.CreateNoWindow = true; // Set to false if you want to see the console window
-            process.Start();
+            //hudStatusText.text = baseStatusText + "STATUS: Not recording" + getpredcheck;
 
-            // Optionally wait for the process to exit
-            process.WaitForExit();
-
-            // Clean up: delete the temporary file
-            File.Delete(tempPath);
-
-            UnityEngine.Debug.Log("Process finished with exit code: " + process.ExitCode);
         }
-        else
-        {
-            myerrocheck = "121";
-        }
-
-
-        TextAsset textAsset = Resources.Load<TextAsset>("myprediction");
-        string fileContent = "sdada";
-        if (textAsset != null)
-        {
-            // Get the text content of the file
-            fileContent = textAsset.text;
-        }
-        else
-        {
-            fileContent = "ERROR";
-        }
-
-        getpredcheck = fileContent;
-
-
-
-        checktest.text = $"Breathing:"+getpredcheck;
-        logWriter.Close();
-        hudStatusText.text = baseStatusText + "STATUS: Not recording";
         
+        
+    }
+
+    IEnumerator SendDataToServer(string inputData)
+    {
+        // Create a JSON object to send to the server
+        TimeSpan timeDifference = DateTime.UtcNow - logStartTime;
+
+        timerText.text = $"{timeDifference.TotalSeconds:F2} s";
+
+        string logValue = $"{timeDifference.TotalMilliseconds},";
+
+        var attributes = sensorReader.GetSensorReadings();
+        foreach (var attribute in attributes)
+        {
+            logValue += $"{attribute.Value.x},{attribute.Value.y},{attribute.Value.z},";
+        }
+
+        string fileContent = File.ReadAllText(inputData);
+        string json = "{\"input\": \"" + logValue + "\"}";
+
+        // Create a UnityWebRequest to send the data
+        UnityWebRequest request = new UnityWebRequest(serverUrl, "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        // Send the request and wait for a response
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+        {
+            hudStatusText.text = baseStatusText + "STATUS: Not recording" + request.error;
+            UnityEngine.Debug.LogError(request.error);
+        }
+        else
+        {
+            // Get the response from the server
+            string responseText = request.downloadHandler.text;
+            UnityEngine.Debug.Log("Response: " + responseText);
+            
+            getpredcheck = responseText;
+            getpredcheck2 = responseText;
+            hudStatusText.text = baseStatusText + "STATUS: Not recording";
+            checktest.text = $"Breathing:" + getpredcheck2;
+        }
+    }
+
+
+    IEnumerator SendDataToServer_CSV(string inputData)
+    {
+        WWWForm form = new WWWForm();
+        form.AddField("appKey", "ABC"); // Add any necessary headers
+        form.AddField("Content-Type", "text/csv");
+
+        // Attach the CSV data to the form
+        form.AddField("csvData", inputData);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.isNetworkError || www.isHttpError)
+            {
+                UnityEngine.Debug.LogError("Error uploading CSV: " + www.error);
+            }
+            else
+            {
+                UnityEngine.Debug.Log("CSV uploaded successfully!");
+            }
+        }
+
     }
 
     /// <summary>
@@ -232,6 +296,7 @@ public class OculusSensorCapture : MonoBehaviour
         }
 
         logWriter.WriteLine(logValue);
+
     }
 
     /// <returns>The number of saved data files for the current user and activity.</returns>
@@ -255,6 +320,12 @@ public class OculusSensorCapture : MonoBehaviour
             }
         }
     }
+    IEnumerator WaitFor20Seconds()
+    {
+        UnityEngine.Debug.Log("Starting 20 second wait...");
+        yield return new WaitForSeconds(20);
+        UnityEngine.Debug.Log("20 seconds have passed!");
+    }
 
     // Update is called once per frame
     void Update()
@@ -269,15 +340,19 @@ public class OculusSensorCapture : MonoBehaviour
         // and refresh the number of collected data files on the UI
         if (frontTriggerPressed)
         {
-            isLogging = !isLogging;
-            if(isLogging)
-            {
-                StartLogging();
-            }
-            else
-            {
-                StopLogging();
-            }
+            if (wallStatusText.text == $"Ready to record your breathing.\nPress the front trigger to start/stop\n10 seconds of recording."){
+                inTutorial = false;
+                isLogging = !isLogging;
+                if(isLogging)
+                {
+                    StartLogging();
+                }
+                else
+                {
+                    StopLogging();
+                }
+            } 
+            
         }
 
         // Toggle logging on/off
@@ -290,7 +365,7 @@ public class OculusSensorCapture : MonoBehaviour
             //}
             //else
             //{
-              //  StopLogging();
+            //  StopLogging();
             //}
 
             sceneIdx += 1;
@@ -306,7 +381,7 @@ public class OculusSensorCapture : MonoBehaviour
             // checking if scene is at a point where we are recording the user's breathing
             else if((sceneIdx % 2) != 0)
             {
-                wallStatusText.text = $"Ready to record your breathing. Press the front trigger to start/stop 10 seconds of recording.";
+                wallStatusText.text = $"Ready to record your breathing.\nPress the front trigger to start/stop\n10 seconds of recording.";
             }
 
             // checking if scene is at a point where we are giving the user an exercise to complete
@@ -320,10 +395,19 @@ public class OculusSensorCapture : MonoBehaviour
                 if(currMood == "normal")
                 {
                     wallStatusText.text = $"{calmExercises[exerciseIdx]}";
+                    //StartCoroutine(WaitFor20Seconds());
+                    //wallStatusText.text = $"BIG OLE TEST.";
+                    //sceneIdx -=1;
+                    //wallStatusText.text = e.Message;
+
                 }
                 else
                 {
                     wallStatusText.text = $"{erraticExercises[exerciseIdx]}";
+                    //StartCoroutine(WaitFor20Seconds());
+                    //wallStatusText.text = $"BIG OLE TEST.";
+                    //wallStatusText.text = e.Message;
+                    
                 }
             }
 
